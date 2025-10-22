@@ -4,48 +4,62 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface Facility {
-  id: number;
+  facilityId: number;
+  groupId: number;
+  displayName: string;
   name: string;
-  address: string;
-  status: "Active" | "Inactive" | "Maintenance";
-  linkedGroup: string;
+  licenseNumber: number;
+  emrSystemDetails: string;
+  facilityTypeId: number;
+  facilitySubTypeId: number;
+  licenseRenewal: string | null;
+  facilityContacts: any[];
+  facilityEMRs: any[];
+  status?: "Active" | "Inactive" | "Maintenance"; // Optional for backward compatibility
 }
 
 const mockFacilities: Facility[] = [
   {
-    id: 1,
-    name: "Main Medical Center",
-    address: "123 Healthcare Ave, Downtown, NY 10001",
-    status: "Active",
-    linkedGroup: "City General Hospital"
+    facilityId: 1,
+    groupId: 1,
+    displayName: "City Hospital",
+    name: "City Hospital Main Branch",
+    licenseNumber: 12345,
+    emrSystemDetails: "Cerner System",
+    facilityTypeId: 1,
+    facilitySubTypeId: 1,
+    licenseRenewal: null,
+    facilityContacts: [],
+    facilityEMRs: [],
+    status: "Active"
   },
   {
-    id: 2,
-    name: "North Wing Clinic",
-    address: "456 Medical Blvd, Uptown, NY 10002",
-    status: "Active",
-    linkedGroup: "Metro Health Center"
+    facilityId: 3,
+    groupId: 1,
+    displayName: "Central Clinic",
+    name: "Central Clinic - Main Branch",
+    licenseNumber: 123456,
+    emrSystemDetails: "Epic EMR v2.1",
+    facilityTypeId: 1,
+    facilitySubTypeId: 1,
+    licenseRenewal: null,
+    facilityContacts: [],
+    facilityEMRs: [],
+    status: "Active"
   },
   {
-    id: 3,
-    name: "Emergency Care Unit",
-    address: "789 Emergency St, Midtown, NY 10003",
-    status: "Maintenance",
-    linkedGroup: "City General Hospital"
-  },
-  {
-    id: 4,
-    name: "Suburban Health Facility",
-    address: "321 Suburban Way, Suburbs, NY 10004",
-    status: "Inactive",
-    linkedGroup: "Suburban Medical Group"
-  },
-  {
-    id: 5,
-    name: "Regional Treatment Center",
-    address: "654 Regional Rd, Regional Area, NY 10005",
-    status: "Active",
-    linkedGroup: "Regional Care Network"
+    facilityId: 4,
+    groupId: 1,
+    displayName: "Central Clinic",
+    name: "Central Clinic - Main Branch",
+    licenseNumber: 123456,
+    emrSystemDetails: "Epic EMR v2.1",
+    facilityTypeId: 1,
+    facilitySubTypeId: 1,
+    licenseRenewal: null,
+    facilityContacts: [],
+    facilityEMRs: [],
+    status: "Inactive"
   }
 ];
 
@@ -58,7 +72,7 @@ export const Facilities = () => {
     setOpenMenuId(openMenuId === id ? null : id);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status?: string) => {
     switch (status) {
       case "Active":
         return "bg-green-100 text-green-800";
@@ -72,9 +86,10 @@ export const Facilities = () => {
   };
 
   const filteredFacilities = mockFacilities.filter(facility =>
+    facility.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     facility.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    facility.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    facility.linkedGroup.toLowerCase().includes(searchTerm.toLowerCase())
+    facility.emrSystemDetails.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    facility.licenseNumber.toString().includes(searchTerm)
   );
 
   const handleAddFacility = () => {
@@ -109,7 +124,7 @@ export const Facilities = () => {
           <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by facility name, address, or linked group..."
+            placeholder="Search by facility name, license number, or EMR system..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -124,16 +139,19 @@ export const Facilities = () => {
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
+                  Display Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Address
+                  Full Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  License Number
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  EMR System
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Linked Group
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -142,39 +160,42 @@ export const Facilities = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredFacilities.map((facility) => (
-                <tr key={facility.id} className="hover:bg-gray-50">
+                <tr key={facility.facilityId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <MapPin className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-                      <div className="text-sm font-medium text-gray-900">{facility.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{facility.displayName}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 max-w-xs truncate">{facility.address}</div>
+                    <div className="text-sm text-gray-900 max-w-xs truncate">{facility.name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{facility.licenseNumber}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{facility.emrSystemDetails}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(facility.status)}`}>
-                      {facility.status}
+                      {facility.status || 'N/A'}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{facility.linkedGroup}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="relative">
                       <button
-                        onClick={() => toggleMenu(facility.id)}
+                        onClick={() => toggleMenu(facility.facilityId)}
                         className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
                       
                       {/* Dropdown Menu */}
-                      {openMenuId === facility.id && (
+                      {openMenuId === facility.facilityId && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10">
                           <div className="py-1">
                             <button 
-                              onClick={() => handleViewDetails(facility.id)}
+                              onClick={() => handleViewDetails(facility.facilityId)}
                               className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
                               <Eye className="w-4 h-4 mr-3" />
